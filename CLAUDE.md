@@ -69,12 +69,30 @@ Three jobs stacked: get *safe*, get *fluent*, get *building*. Order isn't arbitr
 ### QOL & feature wishlist
 
 **Friction removal (small, contained, near-vanilla feel)**
-- Forgettable HMs.
-- Running indoors.
+- Forgettable HMs — or replace HMs with key items (e.g. "AXE" instead of Cut).
+- ~~Running indoors~~ — **DONE** (`src/bike.c`).
 - A "use another Repel?" prompt, or bulk Repel use capped at ~10 at once.
-- Decapitalization of Pokémon names and other text.
+- Decapitalization of Pokémon names and other text (all-caps words → title case).
 - Easy/cheap move relearner.
 - A PC accessible almost anywhere (with story-driven lockouts — see Story ideas).
+- Auto-switch to lowercase in the naming screen.
+- Surviving poison outside of battle at 1 HP (instead of fainting).
+- HP drain bar is ease-in/ease-out (smooth animation instead of linear).
+- Better font — current font is unsatisfying; explore replacements.
+- Link Cable item to trigger trade evolutions without trading.
+- Increased bag item limit.
+- Ability Tutor or Ability Capsule item.
+- Getting rid of unwanted eggs (some mechanic to release/discard).
+- Surfing Pokémon overworld sprites (show the mon you're surfing on).
+- Prevent roaming legendaries from fleeing; support multiple roamers.
+- Move description submenu in battle.
+- Berry sparkling animation when watered (visual feedback).
+- Shiny Pokémon have increased catch rate.
+- Indicate Hidden Power type on the summary screen.
+- Forced battle animations for major fights (gym leaders, rivals, etc.).
+- Pokedex completion rewards (possibly Legends: Arceus style per-species challenges).
+- New intro screen.
+- Quest log / objective journal.
 
 **HMs & field traversal**
 - Use field moves without the move being learned: walk up to water, press A, and if a party member *could* learn Surf and you own the HM, it offers to surf (HM-as-license / Ride-Pokémon style). Open question: require only that a party member is *able* to learn the move, vs. require it to actually know it. Leaning toward "able to learn + own the HM."
@@ -82,10 +100,15 @@ Three jobs stacked: get *safe*, get *fluent*, get *building*. Order isn't arbitr
 - Routes with capability-gated branches: a fire route, a water route, etc., depending on party composition.
 
 **Battle mechanics & move pools**
-- Physical/Special move split. *(Note: more a deliberate balance change than pure QOL — touches the battle engine. Decide consciously.)*
+- Physical/Special move split. *(Foundational — do early before building on battle engine. Touches move data and damage calculation.)*
+- Fairy type. *(Foundational — type chart change, affects everything. Do early.)*
 - Reusable TMs. *(Quietly changes the item economy — decide consciously.)*
-- Fairy typing and other current-gen mechanics; wider move pools.
+- Wider move pools; moves from later generations.
+- New moves, abilities, items, Pokéballs with unique effects, trainer classes, trainers.
+- Possibly new status conditions and field effects.
 - Move mastery: use a move enough and it earns a small permanent perk (accuracy bump, +1 PP, a variant, etc.). Pairs naturally with crafting as a permanent micro-upgrade.
+- New evolution methods (e.g. item-based, friendship-based variants, location-based).
+- Adding Pokémon from other generations.
 
 **Pokémon management — abilities, natures, IVs/EVs**
 - An IV/nature checker item for wild encounters (late-game tool for finding the Pokémon you need). Could also surface held item and ability.
@@ -158,13 +181,20 @@ Three jobs stacked: get *safe*, get *fluent*, get *building*. Order isn't arbitr
 - Idle Pokémon in the PC assigned to a "training ground" for passive XP/EV gain (Sun & Moon did a form of this). Makes the box matter instead of being a graveyard.
 
 **World, exploration & story-adjacent**
-- An objective/quest log.
+- An objective/quest log / journal item.
 - More dungeons.
 - Camping/resting in extensive dungeons.
 - Lore told through artifacts (a Key-Item-like category) placed in a museum to uncover the world's story.
 - Wager battles — bet money against an NPC who bets back.
 - A town (or several) that visibly develops based on your contributions: new shops, shop upgrades, visible changes.
 - Pokédex completion unlocks rewards along the way; possibly per-species Dex challenges (Legends: Arceus style).
+- Multi-region support. *(Foundational if the hack includes a new region — do before building maps.)*
+- Expanding the overworld (more object event slots, palette slots, etc.). *(Do early if needed.)*
+- Level scaling.
+- New cutscenes.
+- Jumping mechanic in overworld traversal.
+- HM items (e.g. "AXE" for Cut) so field moves don't need to be taught to a Pokémon.
+- Idle PC Pokémon assigned to a training ground for passive XP/EV gain.
 
 ### Story Ideas
 - The PC is accessible almost anywhere, but story plot elements lock it during stretches where the player must clear a dungeon or gym with their current party — no switching until they complete it (or leave and restart it). Modern games keep the PC always available; deliberately cutting it off here raises the stakes.
@@ -176,6 +206,23 @@ Three jobs stacked: get *safe*, get *fluent*, get *building*. Order isn't arbitr
 3. **Survey known vanilla bugs** (don't pre-commit to the roamer); log candidates in the Idea Backlog.
 4. **Keep capturing** feature/story ideas in the Idea Backlog.
 
+
+## Technical Investigations (pret tutorials — triage before acting)
+These are known community modifications worth understanding before committing to them. Noted here for research in future sessions.
+
+- **Reclaiming unused vars / flags** *(do early)* — vanilla Emerald uses a fixed pool of script variables and flags for story events. Reclaiming unused ones gives clean space for custom content. If you run out mid-hack, retrofitting is painful.
+- **Expanding metatile count to 4096** *(do before building maps)* — vanilla supports 1024 metatiles per tileset. Expanding to 4096 gives far more visual variety for a new region. Do this before painting maps.
+- **Physical/special split** *(do early — see above)*
+- **Fairy type** *(do early — see above)*
+- **Removing Pokémon data encryption** — vanilla shuffles and encrypts Pokémon struct data in memory as an anti-cheat measure. Removing it simplifies the data structure and makes custom code that reads Pokémon data much easier to write. Low risk, high upside for a heavily modified hack.
+- **Reclaim unused flags, reorganize vars** *(do early)* — companion to the vars note above.
+- **Remove redundant data structures (`SECTOR_DATA_SIZE`)** — affects save data layout. Risky to change after you have real saves you care about. Research before committing.
+- **Remove expensive `BuildColorMaps` function** — a performance optimization. Cosmetic impact, low risk, but not urgent.
+- **Remove animation affines** — "affines" are hardware sprite rotation/scaling effects used in battle animations. Removing them frees up OAM (sprite hardware) slots. Worth doing if battle animations cause glitches or slowdown with lots of custom content; otherwise defer.
+- **Graphics resolution** — GBA hardware is fixed at 240×160. You cannot increase the native resolution. Higher-quality *art* is possible (better pixel work, higher color count via palette tricks), but the pixel dimensions are a hardware ceiling.
+- **New intro screen** — cosmetic, any time.
+- **New cutscenes** — when you need them.
+- **Multi-region support** — research what this entails before building the new region.
 
 ## Open Questions to Define
 - Which specific QOL features will be implemented.
